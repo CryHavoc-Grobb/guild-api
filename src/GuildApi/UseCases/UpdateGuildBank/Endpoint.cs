@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using Ardalis.ApiEndpoints;
+﻿using Ardalis.ApiEndpoints;
 using Microsoft.AspNetCore.Mvc;
 
 namespace GuildApi.UseCases.UpdateGuildBank;
@@ -15,22 +14,4 @@ public class Endpoint : EndpointBaseAsync
     {
         return Ok();
     }
-}
-
-public sealed class UpdateBankRequest
-{
-    [JsonPropertyName("items")]
-    public List<GuildBankItem> Items { get; set; } = [];
-}
-
-public sealed class GuildBankItem
-{
-    [JsonPropertyName("id")]
-    public int Id { get; set; }
-
-    [JsonPropertyName("name")]
-    public string Name { get; set; } = string.Empty;
-
-    [JsonPropertyName("count")]
-    public int Count { get; set; }
 }
