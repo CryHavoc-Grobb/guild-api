@@ -1,23 +1,18 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
-USER $APP_UID
+﻿# Use the official .NET SDK image to build the application
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build-env
 WORKDIR /app
-EXPOSE 8080
-EXPOSE 8081
 
-FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
-ARG BUILD_CONFIGURATION=Release
-WORKDIR /src
-COPY ["GuildApi/GuildApi.csproj", "GuildApi/"]
-RUN dotnet restore "GuildApi/GuildApi.csproj"
-COPY . .
-WORKDIR "/src/GuildApi"
-RUN dotnet build "GuildApi.csproj" -c $BUILD_CONFIGURATION -o /app/build
+# Copy csproj and restore any dependencies (via NuGet)
+COPY src/GuildApi/GuildApi.csproj ./src/GuildApi/
+RUN dotnet restore ./src/GuildApi/GuildApi.csproj
 
-FROM build AS publish
-ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "GuildApi.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+# Copy the project files and build the release
+COPY src/GuildApi/ ./src/GuildApi/
+RUN dotnet publish ./src/GuildApi/GuildApi.csproj -c Release -o out
 
-FROM base AS final
+# Generate runtime image
+FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-COPY --from=publish /app/publish .
+COPY --from=build-env /app/out .
+
 ENTRYPOINT ["dotnet", "GuildApi.dll"]
