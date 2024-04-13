@@ -10,9 +10,10 @@ internal static class MongoDbInstaller
     
     public static void AddMongoDb(this WebApplicationBuilder builder)
     {
+        var connectionString = Environment.GetEnvironmentVariable("MONGO_PRIVATE_URL");
         builder.Services.AddSingleton<IMongoDatabase>(_ =>
         {
-            var settings = MongoClientSettings.FromConnectionString(builder.Configuration["MongoDb:ConnectionString"]);
+            var settings = MongoClientSettings.FromConnectionString(connectionString);
             settings.LinqProvider = LinqProvider.V3;
             var client = new MongoClient(settings);
             return client.GetDatabase(DatabaseName);
