@@ -9,13 +9,18 @@
 
     <ItemGroup>
         <PackageReference Include="Ardalis.ApiEndpoints" Version="4.1.0" />
+        <PackageReference Include="Discord.Net" Version="3.14.1" />
+        <PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.9.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.4"/>
         <PackageReference Include="MongoDB.Driver" Version="2.25.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Infrastructure\MongoDb\" />
+      <None Update="TestData\CryHavocBank.lua">
+        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      </None>
     </ItemGroup>
 
 </Project>
