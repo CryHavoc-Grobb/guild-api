@@ -5,18 +5,27 @@ using MongoDB.Driver;
 
 namespace GuildApi.UseCases.UpdateGuildBank;
 
-public class Endpoint(IServiceProvider services) : EndpointBaseAsync
-    .WithRequest<UpdateBankRequest>
-    .WithActionResult
+public class Endpoint(
+    IServiceProvider services,
+    ILogger<Endpoint> logger) : EndpointBaseAsync
+        .WithRequest<UpdateBankRequest>
+        .WithActionResult
 {
-    private IMongoCollection<GuildBankData> _guildBank
+    private readonly IMongoCollection<GuildBankData> _guildBank
         = services.GetRequiredService<IMongoCollection<GuildBankData>>();
+
+    private readonly IMongoCollection<ConfigData> _config
+        = services.GetRequiredService<IMongoCollection<ConfigData>>();
     
     [HttpPut("/bank", Name = "UPDATE_GUILD_BANK")]
     public override async Task<ActionResult> HandleAsync(
         [FromBody] UpdateBankRequest request, 
         CancellationToken cancellationToken = new())
     {
+        var isAuthorized = await IsAuthorized(cancellationToken);
+        if (!isAuthorized)
+            return Unauthorized();
+        
         var lastUpdate = DateTimeOffset.UtcNow;
         var newData = request.Items
             .GroupBy(i => i.Id)
@@ -37,5 +46,26 @@ public class Endpoint(IServiceProvider services) : EndpointBaseAsync
         await _guildBank.InsertManyAsync(newData, cancellationToken: cancellationToken);
 
         return Ok();
+    }
+
+    private async Task<bool> IsAuthorized(CancellationToken cancellationToken)
+    {
+        // Lazy implementation - move this to auth framework
+        var hasAuth = Request.Headers.TryGetValue("Authorization", out var auth);
+        if (!hasAuth || auth.Count < 1)
+            return false;
+
+        var configCursor = await _config.FindAsync(
+            FilterDefinition<ConfigData>.Empty, 
+            cancellationToken: cancellationToken);
+
+        var config = await configCursor.FirstAsync(cancellationToken);
+        var token = auth.First()!.Replace("token ", string.Empty);
+        var user = config.Keys.SingleOrDefault(k => k.Key == token);
+        if (user is null)
+            return false;
+        
+        logger.LogInformation("API call by {User}", user.User);
+        return true;
     }
 }

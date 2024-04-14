@@ -19,6 +19,7 @@ internal static class MongoDbInstaller
         });
 
         builder.Services.AddCollection<GuildBankData>(GuildBankData.CollectionName);
+        builder.Services.AddCollection<ConfigData>(ConfigData.CollectionName);
     }
 
     private static void AddCollection<T>(this IServiceCollection services, string name)
