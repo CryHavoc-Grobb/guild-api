@@ -25,8 +25,17 @@ public class Endpoint(
         var isAuthorized = await IsAuthorized(cancellationToken);
         if (!isAuthorized)
             return Unauthorized();
+
+        var firstRecord = _guildBank.AsQueryable().First();
+        if (request.FileDate <= firstRecord.LastUpdate)
+        {
+            logger.LogInformation("Older file was ignored. {Incoming} vs. {Latest}", 
+                request.FileDate, 
+                firstRecord.LastUpdate);
+            
+            return Ok();
+        }
         
-        var lastUpdate = DateTimeOffset.UtcNow;
         var newData = request.Items
             .GroupBy(i => i.Id)
             .Select(g => new GuildBankData
@@ -34,7 +43,7 @@ public class Endpoint(
                 ItemId = g.Key,
                 Name = g.First().Name,
                 Quantity = g.Sum(i => i.Count),
-                LastUpdate = lastUpdate
+                LastUpdate = request.FileDate
             });
         
         // truncate the guild bank
